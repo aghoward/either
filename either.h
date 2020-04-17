@@ -99,7 +99,7 @@ class either
             return map(std::forward<TFirstFunc>(mapFirstFunc), [] (auto&& second) -> TSecond { return second; });
         }
 
-        template <typename TSecondFunc, typename TNewSecond>
+        template <typename TSecondFunc, typename TNewSecond = std::invoke_result_t<TSecondFunc, TSecond>>
         either<TFirst, TNewSecond> mapSecond(TSecondFunc&& mapSecondFunc)
         {
             return map([] (auto&& first) -> TFirst { return first; }, mapSecondFunc);
