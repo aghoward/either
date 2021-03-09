@@ -49,6 +49,27 @@ class either
 
         member_t member;
 
+        void deallocateMember()
+        {
+            if (index == MemberIndex::First)
+                member.first.~TFirst();
+            else if (index == MemberIndex::Second)
+                member.second.~TSecond();
+            index = MemberIndex::None;
+        }
+
+        void moveMember(either&& other)
+        {
+            deallocateMember();
+            index = other.index;
+            other.index = MemberIndex::None;
+
+            if (index == MemberIndex::First)
+                new(std::addressof(member.first)) TFirst(std::move(other.member.first));
+            else if (index == MemberIndex::Second)
+                new(std::addressof(member.second)) TSecond(std::move(other.member.second));
+        }
+
     public:
         template <typename T, MemberIndex Index = get_member_index_v<TFirst, TSecond, T>,
             typename = std::enable_if_t<std::disjunction_v<std::is_convertible<T, TFirst>, std::is_convertible<T, TSecond>>>>
@@ -59,31 +80,17 @@ class either
         }
 
         ~either() {
-            if (index == MemberIndex::First)
-                member.first.~TFirst();
-            else if (index == MemberIndex::Second)
-                member.second.~TSecond();
-            index = MemberIndex::None;
+            deallocateMember();
         }
 
         either(either&& other)
         {
-            index = other.index;
-            other.index = MemberIndex::None;
-            if (index == MemberIndex::First)
-                member.first = std::move(other.member.first);
-            else if (index == MemberIndex::Second)
-                member.second = std::move(other.member.second);
+            moveMember(std::forward<either>(other));
         }
 
         either& operator=(either&& other)
         {
-            index = other.index;
-            other.index = MemberIndex::None;
-            if (index == MemberIndex::First)
-                member.first = std::move(other.member.first);
-            else if (index == MemberIndex::Second)
-                member.second = std::move(other.member.second);
+            moveMember(std::forward<either>(other));
             return *this;
         }
         
