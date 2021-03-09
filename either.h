@@ -1,9 +1,9 @@
 #pragma once
 
+#include "either/custom_traits.h"
+
 #include <type_traits>
 #include <utility>
-
-#include "either/custom_traits.h"
 
 enum class MemberIndex
 {
@@ -55,18 +55,21 @@ class either
         either(T&& value)
             : index(Index),
               member(std::move(value))
-        {}
+        {
+        }
 
         ~either() {
             if (index == MemberIndex::First)
                 member.first.~TFirst();
             else if (index == MemberIndex::Second)
                 member.second.~TSecond();
+            index = MemberIndex::None;
         }
 
         either(either&& other)
         {
             index = other.index;
+            other.index = MemberIndex::None;
             if (index == MemberIndex::First)
                 member.first = std::move(other.member.first);
             else if (index == MemberIndex::Second)
@@ -76,6 +79,7 @@ class either
         either& operator=(either&& other)
         {
             index = other.index;
+            other.index = MemberIndex::None;
             if (index == MemberIndex::First)
                 member.first = std::move(other.member.first);
             else if (index == MemberIndex::Second)
@@ -88,7 +92,9 @@ class either
             typename TNewSecond = std::invoke_result_t<TSecondFunc, TSecond>>
         either<TNewFirst, TNewSecond> map(TFirstFunc&& mapFirstFunc, TSecondFunc&& mapSecondFunc)
         {
-            if (index == MemberIndex::First)
+            auto oldIndex = index;
+            index = MemberIndex::None;
+            if (oldIndex == MemberIndex::First)
                 return mapFirstFunc(std::move(member.first));
             return mapSecondFunc(std::move(member.second));
         }
@@ -110,7 +116,9 @@ class either
                     typename = std::enable_if_t<std::is_same_v<std::invoke_result_t<TFirstFunc, TFirst>, std::invoke_result_t<TSecondFunc, TSecond>>>>
         TOutput match(TFirstFunc&& matchFirst, TSecondFunc&& matchSecond)
         {
-            if (index == MemberIndex::First)
+            auto oldIndex = index;
+            index = MemberIndex::None;
+            if (oldIndex == MemberIndex::First)
                 return matchFirst(std::move(member.first));
             return matchSecond(std::move(member.second));
         }
