@@ -1,9 +1,9 @@
 #pragma once
 
-#include "either/custom_traits.h"
+#include "custom_traits.h"
 
-#include <type_traits>
-#include <utility>
+#include <type_traits.h>
+#include <utility.h>
 
 enum class MemberIndex
 {
@@ -93,15 +93,16 @@ class either
             moveMember(std::forward<either>(other));
             return *this;
         }
+
+        either(const either&) = delete;
+        either& operator=(const either&) = delete;
         
         template <typename TFirstFunc, typename TSecondFunc,
             typename TNewFirst = std::invoke_result_t<TFirstFunc, TFirst>,
             typename TNewSecond = std::invoke_result_t<TSecondFunc, TSecond>>
         either<TNewFirst, TNewSecond> map(TFirstFunc&& mapFirstFunc, TSecondFunc&& mapSecondFunc)
         {
-            auto oldIndex = index;
-            index = MemberIndex::None;
-            if (oldIndex == MemberIndex::First)
+            if (index == MemberIndex::First)
                 return mapFirstFunc(std::move(member.first));
             return mapSecondFunc(std::move(member.second));
         }
@@ -123,9 +124,7 @@ class either
                     typename = std::enable_if_t<std::is_same_v<std::invoke_result_t<TFirstFunc, TFirst>, std::invoke_result_t<TSecondFunc, TSecond>>>>
         TOutput match(TFirstFunc&& matchFirst, TSecondFunc&& matchSecond)
         {
-            auto oldIndex = index;
-            index = MemberIndex::None;
-            if (oldIndex == MemberIndex::First)
+            if (index == MemberIndex::First)
                 return matchFirst(std::move(member.first));
             return matchSecond(std::move(member.second));
         }
