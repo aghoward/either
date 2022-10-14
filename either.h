@@ -1,9 +1,9 @@
 #pragma once
 
-#include "custom_traits.h"
+#include <type_traits>
+#include <utility>
 
-#include <type_traits.h>
-#include <utility.h>
+#include "custom_traits.h"
 
 enum class MemberIndex
 {
